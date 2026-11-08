@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="口算题卡">
+<meta name="theme-color" content="#F2F2F7">
+<title>小学数学出题 · 口算题卡</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(140deg,#eef2f8,#dde6f2);padding:24px;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;color:#1c1c1e}
+  button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  .device{width:390px;height:844px;border-radius:46px;background:#F2F2F7;position:relative;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 30px 80px rgba(20,30,60,.25),0 0 0 10px #1c1c1e,0 0 0 11px #444;}
+  .statusbar{height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-size:13px;font-weight:600}
+  .statusbar .icons{letter-spacing:2px;font-size:12px}
+  .app{flex:1;position:relative;overflow:hidden}
+  .page{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+  .page.active{display:flex}
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;padding:8px 20px 6px;flex:0 0 auto}
+  .big-title{font-size:32px;font-weight:800;letter-spacing:-.5px}
+  .add-btn{width:36px;height:36px;border-radius:50%;background:#007AFF;color:#fff;font-size:24px;line-height:32px;text-align:center;margin-bottom:2px;box-shadow:0 4px 12px rgba(0,122,255,.3)}
+  .stat{padding:2px 20px 12px;font-size:13px;color:#8e8e93;flex:0 0 auto}
+  .list{flex:1;overflow-y:auto;padding:0 16px 24px}
+  .empty{margin-top:70px;text-align:center;color:#8e8e93}
+  .empty .ico{width:76px;height:76px;margin:0 auto 18px;border-radius:22px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:36px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+  .empty h3{color:#3a3a3c;font-size:17px;margin:0 0 8px}
+  .empty p{font-size:13px;line-height:1.7;margin:0}
+  .card{background:#fff;border-radius:16px;padding:15px 16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.045)}
+  .card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .card-name{font-size:16px;font-weight:700}
+  .card-sub{font-size:13px;color:#6b6b70;margin-top:7px}
+  .card-time{font-size:11px;color:#aeaeb2;margin-top:8px}
+  .del{font-size:12px;color:#ff3b30;background:#fff0ef;padding:6px 10px;border-radius:8px;flex:0 0 auto}
+  .navbar{height:48px;flex:0 0 48px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(249,249,251,.92);border-bottom:1px solid #e5e5ea}
+  .nav-title{font-size:16px;font-weight:650}
+  .back,.nav-btn{font-size:15px;color:#007AFF;min-width:62px;text-align:left}
+  .nav-btn{text-align:right;font-weight:600}
+  .scroll{flex:1;overflow-y:auto;padding:16px 16px 8px}
+  .group{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px}
+  .group h4{margin:0 0 4px;font-size:15px;font-weight:700}
+  .group .hint{font-size:12px;color:#8e8e93;line-height:1.6;margin:0 0 12px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #f0f0f3}
+  .row:first-of-type{border-top:0}
+  .row label{font-size:14px;color:#3a3a3c}
+  select{font-size:14px;padding:8px 10px;border:1px solid #e5e5ea;border-radius:9px;background:#f9f9fb;color:#1c1c1e;max-width:190px}
+  .stepper{display:flex;align-items:center;gap:12px}
+  .stepper button{width:30px;height:30px;border-radius:9px;background:#eef2f8;font-size:18px;color:#007AFF;line-height:28px}
+  .stepper b{min-width:30px;text-align:center;font-size:16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+  .chip{padding:8px 16px;border-radius:20px;background:#f0f0f3;font-size:14px;color:#6b6b70}
+  .chip.on{background:#007AFF;color:#fff;font-weight:600}
+  .wrow{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #f0f0f3;font-size:13px}
+  .wrow .wl{color:#3a3a3c}
+  .wrow .wl em{font-style:normal;color:#8e8e93;margin-left:6px}
+  .wctrl{display:flex;align-items:center;gap:8px}
+  .wctrl button{width:26px;height:26px;border-radius:8px;background:#eef2f8;color:#007AFF;font-size:16px;line-height:24px}
+  .wctrl span{min-width:46px;text-align:center;font-weight:700;color:#007AFF}
+  .footer-bar{flex:0 0 auto;padding:12px 16px 26px;background:rgba(249,249,251,.95);border-top:1px solid #e5e5ea}
+  .primary{width:100%;height:50px;border-radius:14px;background:#007AFF;color:#fff;font-size:16px;font-weight:700;box-shadow:0 6px 18px rgba(0,122,255,.28)}
+  .preview-tools{flex:0 0 auto;display:flex;gap:8px;padding:10px 14px;background:#f9f9fb;border-bottom:1px solid #e5e5ea}
+  .preview-tools button{flex:1;padding:9px 4px;border-radius:10px;background:#fff;border:1px solid #e5e5ea;font-size:13px;color:#3a3a3c}
+  .sheet-viewport{flex:1;overflow:auto;padding:14px 12px 24px;display:flex;justify-content:center;align-items:flex-start;background:#e9edf3}
+  .sheet-tip{flex:0 0 auto;padding:9px 14px 22px;font-size:11px;color:#8e8e93;text-align:center;background:#f9f9fb;border-top:1px solid #e5e5ea;line-height:1.5}
+  .sheet{width:210mm;height:297mm;padding:10mm 11mm 8mm;background:#fff;color:#111;display:flex;flex-direction:column;flex:0 0 auto;box-shadow:0 6px 20px rgba(0,0,0,.14)}
+  .sheet-head{flex:0 0 auto}
+  .sheet-title{font-size:6mm;font-weight:800;text-align:center;letter-spacing:.6mm}
+  .sheet-meta{margin-top:3mm;display:flex;justify-content:space-between;font-size:3.3mm}
+  .sheet-sub{margin-top:2mm;text-align:center;font-size:3mm;color:#444;border-bottom:.3mm solid #333;padding-bottom:2mm}
+  .sheet-grid{flex:1 1 auto;margin-top:2mm;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(25,1fr);border-top:.2mm solid #d8d8d8;border-left:.2mm solid #d8d8d8}
+  .q{border-right:.2mm solid #d8d8d8;border-bottom:.2mm solid #d8d8d8;display:flex;align-items:center;padding-left:1.6mm;
+    font-size:3.2mm;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+  /* 答案横线：盒高与字号相当，border 自然落在文字基线处，不再悬在格子垂直正中 */
+  .q .blank{display:inline-block;width:7mm;height:3.6mm;border-bottom:.25mm solid #333;margin-left:1mm;flex:0 0 auto}
+  .sheet-foot{flex:0 0 auto;margin-top:2mm;display:flex;justify-content:space-between;font-size:2.9mm;color:#666}
+  .mask{position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:30}
+  .mask.on{display:flex}
+  .action-sheet{width:100%;padding:10px 12px 30px;animation:up .22s ease}
+  @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .as-box{background:rgba(255,255,255,.96);border-radius:16px;overflow:hidden;margin-bottom:10px}
+  .as-title{text-align:center;font-size:12px;color:#8e8e93;padding:12px 0 8px}
+  .as-box button{display:block;width:100%;padding:16px;font-size:16px;color:#007AFF;border-bottom:1px solid #e5e5ea}
+  .as-box button:last-child{border-bottom:0}
+  .as-box button.main-dl{color:#fff;background:#007AFF;font-weight:700}
+  .as-box button.sub-dl{color:#3a3a3c;font-size:15px}
+  .as-box button.cancel{color:#1c1c1e;font-weight:700}
+  .dl-box{display:none;background:#fff;border-radius:16px;padding:14px 16px 16px;margin-bottom:10px;text-align:center}
+  .dl-box.on{display:block}
+  .dl-ok{font-size:13px;color:#1c1c1e;line-height:1.6;word-break:break-all}
+  .dl-ok b{color:#007AFF}
+  .dl-btns{display:flex;gap:8px;margin-top:12px}
+  .dl-btns a{flex:1;padding:12px 6px;border-radius:11px;font-size:14px;font-weight:700;text-decoration:none}
+  .dl-btns a.solid{background:#007AFF;color:#fff}
+  .dl-btns a.ghost{background:#eef2f8;color:#007AFF}
+  .dl-note{font-size:11px;color:#8e8e93;line-height:1.6;margin-top:12px;text-align:left}
+  .toast{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(28,28,30,.9);color:#fff;
+    padding:11px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:40;white-space:nowrap}
+  .toast.on{opacity:1}
+  #printRoot{display:none}
+  @page{size:A4 portrait;margin:0}
+  @media print{
+    body{background:#fff;padding:0;display:block}
+    .device,.mask,.toast{display:none !important}
+    #printRoot{display:block !important}
+    #printRoot .sheet{zoom:1 !important;box-shadow:none;page-break-after:always;break-after:page}
+    #printRoot .sheet:last-child{page-break-after:auto;break-after:auto}
+  }
+  @media (max-width:480px){
+    body{padding:0;background:#F2F2F7;display:block}
+    .device{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+    .statusbar{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="statusbar"><span id="clock">9:41</span><span class="icons">●●● ▰</span></div>
+  <div class="app">
+
+    <!-- P1 首页 -->
+    <section class="page active" id="page-home">
+      <div class="topbar">
+        <div class="big-title">我的试卷</div>
+        <button class="add-btn" onclick="show('page-config')">+</button>
+      </div>
+      <div class="stat" id="statLine"></div>
+      <div class="list" id="historyList"></div>
+    </section>
+
+    <!-- P2 配置页 -->
+    <section class="page" id="page-config">
+      <div class="navbar">
+        <button class="back" onclick="show('page-home')">‹ 返回</button>
+        <div class="nav-title">新建试卷</div>
+        <div style="min-width:62px"></div>
+      </div>
+      <div class="scroll" id="configBody"></div>
+      <div class="footer-bar"><button class="primary" onclick="generateSheet()">生成试卷</button></div>
+    </section>
+
+    <!-- P3 预览页 -->
+    <section class="page" id="page-preview">
+      <div class="navbar">
+        <button class="back" onclick="show('page-home')">‹ 返回</button>
+        <div class="nav-title" id="navPage">1 / 1</div>
+        <button class="nav-btn" onclick="openExport()">导出</button>
+      </div>
+      <div class="preview-tools">
+        <button onclick="prevPage()">‹ 上一页</button>
+        <button onclick="reshuffle()">换一批</button>
+        <button onclick="nextPage()">下一页 ›</button>
+      </div>
+      <div class="sheet-viewport" id="sheetViewport"></div>
+      <div class="sheet-tip">A4 210 × 297 mm · 每页 125 题（5 列 × 25 行）<br>点右上「导出」→「下载 PDF」，直接生成文件，不用打印框</div>
+    </section>
+
+    <!-- E1 导出弹层 -->
+    <div class="mask" id="exportMask" onclick="closeExport()">
+      <div class="action-sheet" onclick="event.stopPropagation()">
+        <div class="dl-box" id="dlBox"></div>
+        <div class="as-box">
+          <div class="as-title">导出试卷 · A4 精确分页</div>
+          <button class="main-dl" onclick="exportPDF()">下载 PDF（推荐，直接生成文件）</button>
+          <button onclick="exportPNG(false)">下载当前页 PNG</button>
+          <button onclick="exportPNG(true)">下载全部页 PNG</button>
+          <button class="sub-dl" onclick="exportPrint()">浏览器打印 / 另存为 PDF（备用）</button>
+        </div>
+        <div class="as-box"><button class="cancel" onclick="closeExport()">取消</button></div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+<div id="printRoot"></div>
+
+<script>
+/* ---------- 年级知识点规则：自动限定运算范围，避免超纲 ---------- */
+const GRADE_RULES = [
+  {id:'1a',label:'一年级上',max:10,   ops:['+','−'],           note:'10 以内加减法'},
+  {id:'1b',label:'一年级下',max:20,   ops:['+','−'],           note:'20 以内加减法、退位减'},
+  {id:'2a',label:'二年级上',max:100,  ops:['+','−','×'],       note:'100 以内加减、表内乘法'},
+  {id:'2b',label:'二年级下',max:100,  ops:['+','−','×','÷'],   note:'表内乘除法、万以内加减'},
+  {id:'3a',label:'三年级上',max:1000, ops:['+','−','×'],       note:'万以内加减、多位数乘一位数'},
+  {id:'3b',label:'三年级下',max:1000, ops:['+','−','×','÷'],   note:'两位数乘两位数、除数一位数除法'},
+  {id:'4a',label:'四年级上',max:10000,ops:['+','−','×','÷'],   note:'三位数乘两位数、除数两位数除法'},
+  {id:'4b',label:'四年级下',max:10000,ops:['+','−','×','÷'],   note:'四则混合、运算律、小数加减'},
+  {id:'5a',label:'五年级上',max:10000,ops:['+','−','×','÷'],   note:'小数乘除、简易方程'},
+  {id:'5b',label:'五年级下',max:10000,ops:['+','−','×','÷'],   note:'分数加减、因数与倍数'},
+  {id:'6a',label:'六年级上',max:10000,ops:['+','−','×','÷'],   note:'分数乘除、百分数'},
+  {id:'6b',label:'六年级下',max:10000,ops:['+','−','×','÷'],   note:'比例、综合运算'},
+];
+const ALL_TYPES = ['口算','竖式','填空'];
+const PER_PAGE = 125, COLS = 5, ROWS = 25;
+const KEY = 'mwa_history_v1';
+
+const state = {
+  grade:'2b', cap:100, pages:1, score:1,
+  types:['口算','竖式','填空'],
+  weights:{'口算':60,'竖式':25,'填空':15}
+};
+let currentSheet = null, currentPage = 1, toastTimer = null;
+
+/* ---------- 工具 ---------- */
+const $ = id => document.getElementById(id);
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),2200);
+}
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } }
+function saveHistory(h){ try{ localStorage.setItem(KEY, JSON.stringify(h.slice(0,12))); }catch(e){ toast('本机存储空间不足，旧试卷未保存'); } }
+
+/* ---------- 出题（短算式，一行写完；加减法允许 0 参与） ---------- */
+function makeQuestion(rule, cap, type){
+  const big = type === '竖式';
+  const ops = rule.ops;
+  if(type === '填空'){
+    const usable = ops.filter(o=>o!=='÷');
+    const op = pick(usable.length?usable:['+']);
+    if(op === '+'){
+      const ans = rnd(3, Math.max(3, Math.min(cap,99)));
+      const a = rnd(0, ans-1);
+      return {expr:`${a} + □ = ${ans}`, answer:ans-a, type};
+    }
+    if(op === '−'){
+      const a = rnd(3, Math.max(3, Math.min(cap,99)));
+      const ans = rnd(0, a-1);
+      return {expr:`${a} − □ = ${ans}`, answer:a-ans, type};
+    }
+    const b = rnd(2,9), q = rnd(2, Math.max(2, Math.min(9, Math.floor(cap/b)||9)));
+    return {expr:`□ × ${b} = ${b*q}`, answer:q, type};
+  }
+  const op = pick(ops);
+  if(op === '+'){
+    const hi = Math.max(4, Math.min(cap, big?999:99));
+    const a = rnd(0, hi-1), b = rnd(0, Math.max(0, hi-a));
+    return {expr:`${a} + ${b} =`, answer:a+b, type};
+  }
+  if(op === '−'){
+    const hi = Math.max(4, Math.min(cap, big?999:99));
+    const a = rnd(0, hi), b = rnd(0, a);
+    return {expr:`${a} − ${b} =`, answer:a-b, type};
+  }
+  if(op === '×'){
+    let a,b;
+    if(big && cap>=100){ a = rnd(11, Math.min(99, Math.max(12,cap))); b = rnd(2,9); }
+    else { a = rnd(2,9); b = rnd(2,9); }
+    return {expr:`${a} × ${b} =`, answer:a*b, type};
+  }
+  const b = rnd(2,9);
+  const qmax = big ? Math.max(2, Math.min(99, Math.floor(cap/b))) : 9;
+  const q = rnd(2, Math.max(2,qmax));
+  return {expr:`${b*q} ÷ ${b} =`, answer:q, type};
+}
+/* 含 0 的运算：0 作加数 / 减数 / 被减数 / 因数 / 被除数，或结果为 0 */
+function makeZeroQuestion(rule, cap){
+  const hi = Math.max(3, Math.min(cap, 99));
+  const op = pick(rule.ops);
+  let expr, answer;
+  if(op === '+'){
+    const b = rnd(1, hi);
+    expr = Math.random()<.5 ? `0 + ${b} =` : `${b} + 0 =`; answer = b;
+  } else if(op === '−'){
+    const a = rnd(1, hi);
+    if(Math.random()<.5){ expr = `${a} − 0 =`; answer = a; }
+    else { expr = `${a} − ${a} =`; answer = 0; }
+  } else if(op === '×'){
+    const b = rnd(1, 9);
+    expr = Math.random()<.5 ? `0 × ${b} =` : `${b} × 0 =`; answer = 0;
+  } else {
+    const b = rnd(1, 9);
+    expr = `0 ÷ ${b} =`; answer = 0;
+  }
+  return {expr, answer, type:'含0运算'};
+}
+const ZERO_PER_PAGE = 10;
+function allocate(weights, total){
+  const keys = Object.keys(weights), out = {}; let acc = 0;
+  keys.forEach((k,i)=>{ if(i===keys.length-1) out[k]=total-acc; else { out[k]=Math.round(total*weights[k]/100); acc+=out[k]; } });
+  return out;
+}
+function generatePage(rule, cap, weights){
+  const counts = allocate(weights, PER_PAGE), list = [];
+  for(const t of Object.keys(counts)) for(let i=0;i<counts[t];i++) list.push(makeQuestion(rule,cap,t));
+  /* 每页固定放入 10 道含 0 的运算，保证试卷里一定出现 0 */
+  const used = new Set();
+  while(used.size < ZERO_PER_PAGE) used.add(rnd(0, PER_PAGE-1));
+  for(const i of used) list[i] = makeZeroQuestion(rule, cap);
+  return list;
+}
+
+/* ---------- 页面切换 ---------- */
+function show(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id===id));
+  if(id==='page-home') renderHome();
+  if(id==='page-config') renderConfig();
+  if(id==='page-preview') renderSheet();
+}
+
+/* ---------- P1 首页 ---------- */
+function renderHome(){
+  const h = loadHistory();
+  $('statLine').textContent = h.length
+    ? `共 ${h.length} 份 · 累计 ${h.reduce((s,x)=>s+x.pages.length*PER_PAGE,0)} 道题`
+    : '还没有试卷，点右上角 + 生成第一份';
+  const list = $('historyList');
+  if(!h.length){
+    list.innerHTML = `<div class="empty"><div class="ico">🧮</div><h3>一份试卷都还没有</h3>
+      <p>选好年级、题型和页数<br>一键生成每页 125 题的 A4 口算题卡</p></div>`;
+    return;
+  }
+  list.innerHTML = h.map(x=>`
+    <div class="card" onclick="openSheet(${x.id})">
+      <div class="card-top"><div class="card-name">${x.name}</div>
+        <button class="del" onclick="event.stopPropagation();delSheet(${x.id})">删除</button></div>
+      <div class="card-sub">${x.gradeLabel} · ${x.pages.length} 页 · ${x.pages.length*PER_PAGE} 题 · 5 列 × 25 行</div>
+      <div class="card-time">${x.createdAt} · 每题 ${x.score} 分</div>
+    </div>`).join('');
+}
+function openSheet(id){
+  const x = loadHistory().find(i=>i.id===id);
+  if(!x){ toast('试卷已不存在'); return; }
+  currentSheet = x; currentPage = 1; show('page-preview');
+}
+function delSheet(id){
+  if(!confirm('删除这份试卷？')) return;
+  saveHistory(loadHistory().filter(i=>i.id!==id)); renderHome(); toast('已删除');
+}
+
+/* ---------- P2 配置页 ---------- */
+function normalizeWeights(){
+  const keys = state.types; if(!keys.length) return;
+  let w = keys.map(k=>Math.max(5, state.weights[k]||0));
+  const sum = w.reduce((a,b)=>a+b,0);
+  w = w.map(v=>Math.round(v*100/sum));
+  w[w.length-1] += 100 - w.reduce((a,b)=>a+b,0);
+  state.weights = {}; keys.forEach((k,i)=>state.weights[k]=w[i]);
+}
+function toggleType(t){
+  if(state.types.includes(t)){
+    if(state.types.length===1){ toast('至少保留一种题型'); return; }
+    state.types = state.types.filter(x=>x!==t); delete state.weights[t];
+  }else{ state.types.push(t); state.weights[t]=20; }
+  normalizeWeights(); renderConfig();
+}
+function adjustWeight(t,d){
+  if(state.types.length<2){ toast('只有一种题型，无需分配比例'); return; }
+  const others = state.types.filter(k=>k!==t);
+  const target = Math.max(5, Math.min(90, state.weights[t]+d));
+  const rest = 100-target, oldRest = others.reduce((s,k)=>s+state.weights[k],0)||1;
+  const nw = {[t]:target}; let acc = target;
+  others.forEach((k,i)=>{
+    if(i===others.length-1) nw[k]=Math.max(5,100-acc);
+    else { nw[k]=Math.max(5,Math.round(rest*state.weights[k]/oldRest)); acc+=nw[k]; }
+  });
+  state.weights = nw; normalizeWeights(); renderConfig();
+}
+function setGrade(v){
+  state.grade = v;
+  const r = GRADE_RULES.find(x=>x.id===v);
+  if(state.cap > r.max) state.cap = [10,20,100,1000].filter(n=>n<=r.max).pop() || 10;
+  renderConfig();
+}
+function renderConfig(){
+  const r = GRADE_RULES.find(x=>x.id===state.grade);
+  const gradeOpts = GRADE_RULES.map(g=>`<option value="${g.id}" ${g.id===state.grade?'selected':''}>${g.label}</option>`).join('');
+  const capOpts = [10,20,100,1000].map(v=>`<option value="${v}" ${v===state.cap?'selected':''}>${v} 以内</option>`).join('');
+  const chips = ALL_TYPES.map(t=>`<button class="chip ${state.types.includes(t)?'on':''}" onclick="toggleType('${t}')">${t}</button>`).join('');
+  const counts = allocate(state.weights, PER_PAGE);
+  const wrows = state.types.map(t=>`
+    <div class="wrow"><div class="wl">${t}<em>${counts[t]} 题</em></div>
+      <div class="wctrl">
+        <button onclick="adjustWeight('${t}',-5)">−</button>
+        <span>${state.weights[t]}%</span>
+        <button onclick="adjustWeight('${t}',5)">+</button>
+      </div></div>`).join('');
+  $('configBody').innerHTML = `
+    <div class="group">
+      <h4>年级与知识点范围</h4>
+      <p class="hint">切换年级会自动收敛可用运算，避免出超纲题。</p>
+      <div class="row"><label>年级 / 学期</label><select onchange="setGrade(this.value)">${gradeOpts}</select></div>
+      <div class="row"><label>本阶段知识点</label><span style="font-size:13px;color:#007AFF;text-align:right;max-width:200px">${r.note}</span></div>
+    </div>
+    <div class="group">
+      <h4>题型组合</h4>
+      <p class="hint">竖式题以横式呈现（5 列密排网格放不下竖式），孩子在草稿纸列竖式；填空题答案写在 □ 内，不再另加横线；比例合计 100%，对应每页 125 题。</p>
+      <div class="chips">${chips}</div>
+      <div style="margin-top:10px">${wrows}</div>
+    </div>
+    <div class="group">
+      <h4>题量与难度</h4>
+      <p class="hint">每页固定 125 题（5 列 × 25 行），题量按页数计算。</p>
+      <div class="row"><label>页数 / 总题数</label>
+        <div class="stepper"><button onclick="stepPages(-1)">−</button><b>${state.pages}</b><button onclick="stepPages(1)">+</button></div>
+        <span style="font-size:12px;color:#8e8e93">${state.pages*PER_PAGE} 题</span></div>
+      <div class="row"><label>数值范围（难度）</label><select onchange="state.cap=Number(this.value);renderConfig()">${capOpts}</select></div>
+    </div>
+    <div class="group">
+      <h4>分值与页眉</h4>
+      <p class="hint">页眉固定含姓名 / 日期 / 用时 / 得分栏，满分按分值自动计算。</p>
+      <div class="row"><label>每题分值</label>
+        <div class="stepper"><button onclick="stepScore(-1)">−</button><b>${state.score}</b><button onclick="stepScore(1)">+</button></div>
+        <span style="font-size:12px;color:#8e8e93">满分 ${PER_PAGE*state.score} 分</span></div>
+    </div>
+    <p style="font-size:12px;color:#8e8e93;text-align:center;padding:2px 8px 8px;line-height:1.7">题目含 0 参与的运算（每页至少 10 道，如 0 + 5、8 − 0、0 × 8、0 ÷ 6）。<br>本版不含参考答案页，也不做手机做题判分。</p>`;
+}
+function stepPages(d){ state.pages = Math.max(1, Math.min(5, state.pages+d)); renderConfig(); }
+function stepScore(d){ state.score = Math.max(1, Math.min(10, state.score+d)); renderConfig(); }
+
+/* ---------- 生成 / 预览 ---------- */
+function generateSheet(){
+  const r = GRADE_RULES.find(x=>x.id===state.grade);
+  const cap = Math.min(r.max, state.cap);
+  const pages = [];
+  for(let p=0;p<state.pages;p++) pages.push(generatePage(r,cap,state.weights));
+  const h = loadHistory();
+  const item = {
+    id: Date.now(), name:`${r.label} · 第 ${h.length+1} 份`, gradeLabel:r.label, score:state.score,
+    createdAt: new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    config:{grade:state.grade, cap:state.cap, pages:state.pages, weights:JSON.parse(JSON.stringify(state.weights))},
+    pages
+  };
+  h.unshift(item); saveHistory(h);
+  currentSheet = item; currentPage = 1; show('page-preview');
+  toast(`已生成 ${state.pages} 页，共 ${state.pages*PER_PAGE} 题`);
+}
+function reshuffle(){
+  if(!currentSheet) return;
+  const c = currentSheet.config, r = GRADE_RULES.find(x=>x.id===c.grade), cap = Math.min(r.max,c.cap);
+  currentSheet.pages = Array.from({length:c.pages},()=>generatePage(r,cap,c.weights));
+  const h = loadHistory(), i = h.findIndex(x=>x.id===currentSheet.id);
+  if(i>=0){ h[i]=currentSheet; saveHistory(h); }
+  renderSheet(); toast('已换一批题目');
+}
+function prevPage(){ if(!currentSheet) return; currentPage=Math.max(1,currentPage-1); renderSheet(); }
+function nextPage(){ if(!currentSheet) return; currentPage=Math.min(currentSheet.pages.length,currentPage+1); renderSheet(); }
+
+function makeSheetNode(qs, idx, total){
+  const el = document.createElement('div'); el.className='sheet';
+  el.innerHTML = `
+    <div class="sheet-head">
+      <div class="sheet-title">小学数学口算练习卷</div>
+      <div class="sheet-meta"><span>姓名：____________</span><span>日期：____________</span><span>用时：________</span><span>得分：________</span></div>
+      <div class="sheet-sub">${currentSheet.gradeLabel} · 共 ${PER_PAGE} 题 · 每题 ${currentSheet.score} 分 · 满分 ${PER_PAGE*currentSheet.score} 分</div>
+    </div>
+    <div class="sheet-grid">${qs.map(q=>`<div class="q"><span>${q.expr}</span>${q.expr.includes('□')?'':'<i class="blank"></i>'}</div>`).join('')}</div>
+    <div class="sheet-foot"><span>小学数学出题 · 口算题卡</span><span>第 ${idx+1} 页 / 共 ${total} 页</span></div>`;
+  return el;
+}
+function fitSheet(){
+  const vp = $('sheetViewport'), el = vp.querySelector('.sheet');
+  if(!el) return;
+  el.style.zoom = Math.min(1, (vp.clientWidth-24)/794);
+}
+function renderSheet(){
+  if(!currentSheet){ show('page-home'); return; }
+  const total = currentSheet.pages.length;
+  currentPage = Math.max(1, Math.min(total, currentPage));
+  const vp = $('sheetViewport'); vp.innerHTML='';
+  vp.appendChild(makeSheetNode(currentSheet.pages[currentPage-1], currentPage-1, total));
+  $('navPage').textContent = `${currentPage} / ${total}`;
+  fitSheet(); vp.scrollTop = 0;
+}
+
+/* ---------- 导出：直接生成文件，不依赖浏览器打印对话框 ---------- */
+function openExport(){ $('exportMask').classList.add('on'); }
+function closeExport(){ $('exportMask').classList.remove('on'); }
+function escHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtSize(n){ return n<1024 ? n+' B' : n<1048576 ? (n/1024).toFixed(0)+' KB' : (n/1048576).toFixed(1)+' MB'; }
+function bytesToBase64(bytes){
+  let s=''; const CH=32768;
+  for(let i=0;i<bytes.length;i+=CH) s += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+CH, bytes.length)));
+  return btoa(s);
+}
+function canvasToBytes(cv, mime, quality){
+  const bin = atob(cv.toDataURL(mime, quality).split(',')[1]);
+  const out = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+/* 零依赖 PDF 1.4 生成器：每页一张 A4 图片。中文由 canvas 画成像素，不会乱码 */
+function buildPdf(pages){
+  const A4W=595.28, A4H=841.89;
+  const enc = str => { const a=new Uint8Array(str.length); for(let i=0;i<str.length;i++) a[i]=str.charCodeAt(i)&255; return a; };
+  const chunks=[], offsets=[]; let len=0;
+  const push = x => { const b = typeof x==='string' ? enc(x) : x; chunks.push(b); len += b.length; };
+  const obj = (n, dict, stream) => {
+    offsets[n]=len;
+    push(`${n} 0 obj\n${dict}`);
+    if(stream){ push('\nstream\n'); push(stream); push('\nendstream'); }
+    push('\nendobj\n');
+  };
+  push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  const N=pages.length, maxObj=2+3*N;
+  const kids=pages.map((_,i)=>`${3+3*i} 0 R`).join(' ');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${N} >>`);
+  pages.forEach((p,i)=>{
+    const pn=3+3*i, cn=4+3*i, im=5+3*i;
+    const content=enc(`q\n${A4W} 0 0 ${A4H} 0 0 cm\n/Im0 Do\nQ\n`);
+    obj(pn, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${A4W} ${A4H}] /Resources << /XObject << /Im0 ${im} 0 R >> >> /Contents ${cn} 0 R >>`);
+    obj(cn, `<< /Length ${content.length} >>`, content);
+    obj(im, `<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpeg.length} >>`, p.jpeg);
+  });
+  const xrefPos=len;
+  let xref=`xref\n0 ${maxObj+1}\n0000000000 65535 f \n`;
+  for(let n=1;n<=maxObj;n++) xref += String(offsets[n]).padStart(10,'0')+' 00000 n \n';
+  push(xref);
+  push(`trailer\n<< /Size ${maxObj+1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF\n`);
+  const out=new Uint8Array(len); let pos=0;
+  for(const b of chunks){ out.set(b,pos); pos+=b.length; }
+  return out;
+}
+function makePdfBytes(){
+  const total=currentSheet.pages.length;
+  const pages=currentSheet.pages.map((qs,i)=>{
+    const cv=drawPageCanvas(qs,i,total);
+    return { jpeg:canvasToBytes(cv,'image/jpeg',0.92), w:cv.width, h:cv.height };
+  });
+  return buildPdf(pages);
+}
+/* 触发自动下载，并在弹层里留一个永远点得到的下载入口 */
+function presentDownload(bytes, name, mime, append){
+  const blob=new Blob([bytes],{type:mime});
+  const u=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=u; a.download=name; a.style.display='none';
+  document.body.appendChild(a); a.click(); a.remove();
+  const dataUrl=`data:${mime};base64,${bytesToBase64(bytes)}`;
+  const box=$('dlBox');
+  const html=`<div class="dl-ok">已生成 <b>${escHtml(name)}</b> · ${fmtSize(bytes.length)}</div>`+
+    `<div class="dl-btns"><a class="solid" href="${dataUrl}" download="${escHtml(name)}">⬇ 点此下载</a>`+
+    `<a class="ghost" href="${u}" target="_blank" rel="noopener">新窗口打开</a></div>`;
+  const note=`<div class="dl-note">若自动下载没有开始，请点「点此下载」；手机上可长按链接选「存储到文件」。新窗口打开后也能用浏览器菜单另存。PDF 为图片型（文字不可复制），但打印清晰。</div>`;
+  if(append && box.classList.contains('on')){
+    const n=box.querySelector('.dl-note');
+    if(n) n.insertAdjacentHTML('beforebegin', html); else box.insertAdjacentHTML('beforeend', html);
+  } else {
+    box.innerHTML=html+note; box.classList.add('on');
+  }
+}
+function exportPDF(){
+  if(!currentSheet) return;
+  const total=currentSheet.pages.length;
+  toast(`正在生成 ${total} 页 PDF…`);
+  try{
+    const bytes=makePdfBytes();
+    presentDownload(bytes, `试卷_${currentSheet.gradeLabel}_${total}页.pdf`, 'application/pdf');
+    toast('PDF 已生成，可直接下载');
+  }catch(e){ toast('PDF 生成失败：'+e.message); }
+}
+function exportPrint(){
+  if(!currentSheet) return;
+  const root=$('printRoot'); root.innerHTML='';
+  currentSheet.pages.forEach((qs,i)=>root.appendChild(makeSheetNode(qs,i,currentSheet.pages.length)));
+  closeExport(); toast('备用方式：在打印框里选「另存为 PDF」');
+  setTimeout(()=>window.print(), 350);
+}
+function drawPageCanvas(qs, idx, total){
+  const S = 2, W = 794*S, H = 1123*S, mm = 3.7795*S;
+  const cv = document.createElement('canvas'); cv.width=W; cv.height=H;
+  const c = cv.getContext('2d');
+  c.fillStyle='#fff'; c.fillRect(0,0,W,H);
+  c.fillStyle='#111'; c.textBaseline='middle';
+  c.font=`bold ${6*mm}px sans-serif`; c.textAlign='center';
+  c.fillText('小学数学口算练习卷', W/2, 13*mm);
+  c.font=`${3.3*mm}px sans-serif`; c.textAlign='left';
+  ['姓名：____________','日期：____________','用时：________','得分：________'].forEach((t,i)=>c.fillText(t,(11+i*47)*mm,19*mm));
+  c.font=`${3*mm}px sans-serif`; c.textAlign='center';
+  c.fillText(`${currentSheet.gradeLabel} · 共 125 题 · 每题 ${currentSheet.score} 分 · 满分 ${125*currentSheet.score} 分`, W/2, 25*mm);
+  const left=11*mm, right=W-11*mm, top=29*mm, bottom=H-12*mm;
+  const gw=(right-left)/5, gh=(bottom-top)/25;
+  c.strokeStyle='#d8d8d8'; c.lineWidth=1*S;
+  c.beginPath();
+  for(let i=0;i<=5;i++){ c.moveTo(left+i*gw,top); c.lineTo(left+i*gw,bottom); }
+  for(let j=0;j<=25;j++){ c.moveTo(left,top+j*gh); c.lineTo(right,top+j*gh); }
+  c.stroke();
+  c.font=`${3.2*mm}px sans-serif`; c.textAlign='left'; c.fillStyle='#111';
+  qs.forEach((q,i)=>{
+    const x=left+(i%5)*gw+1.6*mm, y=top+Math.floor(i/5)*gh+gh/2;
+    c.fillText(q.expr,x,y);
+    if(!q.expr.includes('□')){
+      const tw=c.measureText(q.expr).width;
+      c.strokeStyle='#333'; c.lineWidth=1*S; c.beginPath();
+      c.moveTo(x+tw+1*mm,y+1.8*mm); c.lineTo(x+tw+1*mm+7*mm,y+1.8*mm); c.stroke();
+    }
+  });
+  c.font=`${2.9*mm}px sans-serif`; c.fillStyle='#666';
+  c.textAlign='left'; c.fillText('小学数学出题 · 口算题卡',left,H-6*mm);
+  c.textAlign='right'; c.fillText(`第 ${idx+1} 页 / 共 ${total} 页`,right,H-6*mm);
+  return cv;
+}
+function exportPNG(all){
+  if(!currentSheet) return;
+  const total=currentSheet.pages.length;
+  const list = all ? currentSheet.pages.map((_,i)=>i) : [currentPage-1];
+  list.forEach((i,k)=>setTimeout(()=>{
+    try{
+      const cv=drawPageCanvas(currentSheet.pages[i],i,total);
+      presentDownload(canvasToBytes(cv,'image/png'), `试卷_${currentSheet.gradeLabel}_第${i+1}页.png`, 'image/png', all && k>0);
+    }catch(e){ toast('PNG 生成失败：'+e.message); }
+  }, k*350));
+  toast(all ? `正在生成 ${total} 页 PNG` : '正在生成当前页 PNG');
+}
+
+/* ---------- 初始化 ---------- */
+(function init(){
+  const now = new Date();
+  $('clock').textContent = now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
+  show('page-home');
+  window.addEventListener('resize', fitSheet);
+})();
+</script>
+</body>
+</html>

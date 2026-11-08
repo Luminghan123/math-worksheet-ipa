@@ -1,0 +1,9 @@
+{
+  "appId": "com.yourname.mathworksheet",
+  "appName": "口算题卡",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#F2F2F7"
+  }
+}

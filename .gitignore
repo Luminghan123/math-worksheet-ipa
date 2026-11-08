@@ -1,0 +1,14 @@
+# 依赖与构建产物（不要提交，CI 会自己生成）
+node_modules/
+ios-shell/ios/
+ios-shell/build/
+ios-shell/Payload/
+ios-shell/*.ipa
+ios-shell/*.xcarchive
+ios-shell/DerivedData/
+
+# 系统文件
+.DS_Store
+*.swp
+
+# 注意：ios-shell/www/index.html 是 APP 本体，必须提交，不要忽略
