@@ -52,7 +52,7 @@ class _DesktopShellState extends State<DesktopShell> {
       pane: NavigationPane(
         selected: _selected,
         onChanged: (i) => setState(() => _selected = i),
-        displayMode: PaneDisplayMode.open,
+        displayMode: PaneDisplayMode.expanded,
         header: const Padding(
           padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
           child: Text(
