@@ -1,0 +1,188 @@
+name: 构建未签名 IPA（Flutter · TrollStore 巨魔）
+
+# 参考软件（呼吸治疗记录 iOS 云构建包 V1.1）跑通的方案：
+#   Flutter 3.47.9 + macos-15 + flutter build ios --release --no-codesign
+#   → Payload/Runner.app → 清 macOS 元数据 → ad-hoc 签名 → zip -X → Release
+# 巨魔用 CoreTrust 漏洞永久签名，能装「未签名」ipa，不需要 Apple 证书。
+#
+# 本工程不含 MLKit / OCR，故删掉了参考项目里那两段 Swift Package 补丁，
+# 其余构建与打包步骤保持一致。手机系统需 iOS 15.0 或更高（Flutter 3.47 最低部署目标）。
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - '.github/workflows/build-unsigned-ipa.yml'
+      - 'pubspec.yaml'
+      - 'lib/**'
+      - 'tool/**'
+      - 'assets/**'
+      - 'ios/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-flutter-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+          cache: true
+
+      - name: 打印构建环境并预下载 iOS 产物
+        run: |
+          flutter --version
+          xcodebuild -version
+          flutter precache --ios
+
+      - name: 启用 Swift Package Manager（沿用参考项目的 iOS 工程结构）
+        run: flutter config --enable-swift-package-manager
+
+      - name: 拉取 Dart 依赖并重建 iOS 配置文件
+        run: flutter pub get
+
+      # 确认 pub get 解析出了 printing（系统分享面板）与 shared_preferences（本机历史）
+      - name: 校验插件依赖已解析
+        run: |
+          echo "--- 插件依赖清单 ---"
+          cat .flutter-plugins-dependencies | head -c 800; echo
+          if ! grep -q 'printing' .flutter-plugins-dependencies; then
+            echo "::error::未解析到 printing 插件，Printing.sharePdf 将不可用"
+            exit 1
+          fi
+          echo "✓ printing 已解析"
+          echo "--- GeneratedPluginRegistrant.m（诊断用）---"
+          cat ios/Runner/GeneratedPluginRegistrant.m
+
+      # 静态检查：把 Dart 编译错误（命名冲突、类型不匹配等）提前暴露，
+      # 避免被 flutter build ios 失败后的「需要开发者团队」兜底提示盖住。非阻塞，仅打印。
+      - name: 静态检查 Dart 代码（提前暴露编译错误）
+        continue-on-error: true
+        run: dart analyze lib
+
+      # 出包前真实执行：出题引擎回归 + 生成一份 A4 PDF。
+      # 设为非阻塞：这是额外自检，不该阻止 IPA 产出；日志仍会完整保留供排查。
+      - name: 校验出题引擎与 PDF 生成（真实执行）
+        continue-on-error: true
+        run: |
+          dart run tool/verify_engine.dart
+          dart run tool/gen_sample_pdf.dart
+
+      - name: 上传示例试卷 PDF（版式校验用）
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-worksheet-pdf
+          path: build/示例试卷_二年级下_2页.pdf
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: 按需安装 CocoaPods 依赖
+        run: |
+          if [ -f ios/Podfile ]; then
+            echo "检测到 Podfile，执行 pod install"
+            cd ios && pod install
+          else
+            echo "无 Podfile，使用 Swift Package Manager，跳过"
+          fi
+
+      # 双保险：工程里已把签名配置永久改成 Manual + 无签名，这里再跑一次幂等脚本，
+      # 防止 flutter pub get / Swift Package Manager 重新生成 Xcode 配置时把 Automatic 带回来。
+      # 脚本还会补一个 DEVELOPMENT_TEAM 键：Flutter 3.47 的 _missingDevelopmentTeam()
+      # 只看这个键是否存在，缺了就会吞掉真实 Xcode 错误、只报「需要开发者团队」。
+      - name: 关闭 Xcode 工程自动签名（避免要求 Development Team）
+        run: python3 scripts/disable-signing.py ios/Runner.xcodeproj/project.pbxproj
+
+      # -v 会打印 xcodebuild 的完整输出；tee 存盘，失败时由下一步摘录错误行。
+      - name: 编译 iOS release（不签名）
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign --no-pub -v 2>&1 | tee build-ios.log
+
+      - name: 打印编译失败详情（仅失败时）
+        if: failure()
+        run: |
+          echo "=== 错误行摘录（最多 120 条）==="
+          grep -inE 'error:|error |fatal|failed|no such|undefined|cannot|exception|signing|provision|development team|requires|Xcode.s output|Error output|target .* failed' build-ios.log | tail -120 || true
+          echo "=== 日志末尾 200 行 ==="
+          tail -200 build-ios.log || true
+
+      - name: 打包成 IPA（Payload/Runner.app）
+        run: |
+          set -e
+          APP="build/ios/iphoneos/Runner.app"
+          if [ ! -d "$APP" ]; then
+            APP=$(find build -type d -name "Runner.app" -print -quit)
+          fi
+          if [ -z "$APP" ] || [ ! -d "$APP" ]; then
+            echo "::error::找不到 Runner.app，候选目录："
+            find build -maxdepth 6 -name "*.app" -type d || true
+            exit 1
+          fi
+          echo "使用 App: $APP"
+          codesign -dv "$APP" 2>&1 | head -n 3 || true
+
+          rm -rf Payload math-worksheet-unsigned.ipa
+          mkdir Payload
+          cp -R "$APP" Payload/
+
+          # 清掉 macOS 元数据：TrollStore 解析 IPA 时遇到 ._ 开头的 AppleDouble 文件会报错
+          xattr -cr Payload 2>/dev/null || true
+          find Payload -name '._*' -delete 2>/dev/null || true
+          find Payload -name '.DS_Store' -delete 2>/dev/null || true
+
+          # 补一层 ad-hoc 签名：巨魔本来能自己签，
+          # 但带上标准签名结构后，爱思助手 / Filza 等安装器也能识别
+          codesign -f -s - --deep Payload/Runner.app 2>/dev/null \
+            || echo "ad-hoc 签名跳过（TrollStore 仍可正常安装）"
+
+          # -y 保留符号链接（framework 需要），-X 不写扩展属性（避免 __MACOSX）
+          zip -qrXy math-worksheet-unsigned.ipa Payload
+          ls -lh math-worksheet-unsigned.ipa
+
+      - name: 校验 IPA 结构
+        run: |
+          set -e
+          unzip -l math-worksheet-unsigned.ipa | grep -q 'Payload/Runner.app/Info.plist'
+          unzip -l math-worksheet-unsigned.ipa | grep -q 'Payload/Runner.app/Runner'
+          if unzip -l math-worksheet-unsigned.ipa | grep -q '__MACOSX'; then
+            echo "::error::IPA 里混入了 macOS 元数据"; exit 1
+          fi
+          echo "IPA 结构校验通过（Payload/Runner.app）"
+          unzip -l math-worksheet-unsigned.ipa | tail -n 5
+
+      - name: 上传构建产物（Artifact，保留 30 天）
+        uses: actions/upload-artifact@v4
+        with:
+          name: math-worksheet-flutter-ipa
+          path: math-worksheet-unsigned.ipa
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 发布到 Releases（手机 Safari 可直接下载，固定链接 ipa-latest）
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=ipa-latest
+          IPA=math-worksheet-unsigned.ipa
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$IPA" --clobber
+          else
+            gh release create "$TAG" "$IPA" \
+              --title "口算题卡 · 未签名 IPA（Flutter · 巨魔）" \
+              --notes "GitHub Actions 自动构建的 Flutter 未签名 IPA，供 TrollStore / 巨魔助手安装使用。PDF 通过系统分享面板保存，不在手机里新建文件夹。"
+          fi

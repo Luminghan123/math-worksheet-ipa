@@ -1,0 +1,33 @@
+name: math_worksheet
+description: 小学数学口算题卡（Flutter 版）· 按年级出题、A4 每页 125 题、系统分享面板保存 PDF
+publish_to: 'none'
+version: 2.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # PDF 生成 + 系统分享面板（对齐参考软件 Printing.sharePdf 的下载逻辑）
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  # 历史试卷只存本机
+  shared_preferences: ^2.2.3
+  provider: ^6.1.2
+  # Windows 桌面端：Fluent UI（微软风格）+ 系统「另存为」对话框保存 PDF
+  fluent_ui: 4.17.0
+  file_selector: 1.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    # 内嵌到 PDF 的中文字体（从 SimHei 子集化而来，仅含试卷所需字符，43KB）
+    - assets/fonts/WorksheetCJK.ttf

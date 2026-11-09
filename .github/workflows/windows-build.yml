@@ -1,0 +1,77 @@
+name: build-windows-exe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'assets/**'
+      - 'windows/**'
+      - 'tool/**'
+      - 'scripts/**'
+      - '.github/workflows/windows-build.yml'
+  workflow_dispatch:
+
+# 发布 Release 需要写权限
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: 'stable'
+
+      - name: 启用 Windows 桌面支持
+        run: flutter config --enable-windows-desktop
+
+      - name: 生成 Windows 工程（首次 / 缺失时）
+        run: flutter create --platforms=windows .
+
+      - name: 拉取依赖
+        run: flutter pub get
+
+      - name: 出题引擎回归（纯 Dart 自检）
+        run: dart run tool/verify_engine.dart
+        continue-on-error: true
+
+      - name: 静态检查（提前暴露编译错误）
+        run: dart analyze
+        continue-on-error: true
+
+      - name: 构建 Windows release
+        run: flutter build windows --release
+
+      - name: 打包为绿色免安装版（zip，整目录含 exe / dll / data）
+        shell: pwsh
+        run: |
+          $src = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $src)) { Write-Error "未找到 Release 目录: $src" }
+          Compress-Archive -Path "$src\*" -DestinationPath math-worksheet-windows.zip -Force
+
+      - name: 上传构建产物（保留 30 天）
+        uses: actions/upload-artifact@v4
+        with:
+          name: math-worksheet-windows
+          path: math-worksheet-windows.zip
+
+      - name: 发布到 Releases（固定标签 win-latest）
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view win-latest >/dev/null 2>&1; then
+            gh release upload win-latest math-worksheet-windows.zip --clobber
+          else
+            gh release create win-latest math-worksheet-windows.zip \
+              --title "Windows 绿色免安装版" \
+              --notes "未签名 Windows 绿色免安装版（解压即用的 exe 包）。双击 math_worksheet.exe 即可运行，无需安装、不写注册表、不在电脑里新建文件夹。"
+          fi

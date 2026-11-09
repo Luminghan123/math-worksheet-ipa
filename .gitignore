@@ -1,0 +1,26 @@
+# 参考工程 / 构建产物
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
+
+# iOS 生成物（由 flutter pub get / build 自动重建）
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/Podfile.lock
+ios/.symlinks/
+**/Flutter/.last_build_id
+
+# 交付物不入库
+*.ipa
+*.zip
