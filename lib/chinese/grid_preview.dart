@@ -237,7 +237,20 @@ class _FourLinesPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is! _FourLinesPainter) return true;
+    final a = oldDelegate.ly;
+    final b = ly;
+    if (a == null || b == null) return a != b;
+    // 「换一批」可能出现同字母不同调（如 ma → mā），此时字母主体不变、
+    // 声调却变了，必须按内容比较强制重绘，否则调号会停留在旧值。
+    return a.parts.base != b.parts.base ||
+        a.parts.tone != b.parts.tone ||
+        a.parts.toneIndex != b.parts.toneIndex ||
+        a.x0 != b.x0 ||
+        a.unitW != b.unitW ||
+        a.cellH != b.cellH;
+  }
 }
 
 /// 田字格：外框 + 横竖十字中线（虚线），无对角线
