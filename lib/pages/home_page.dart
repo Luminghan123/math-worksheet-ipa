@@ -144,6 +144,67 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
+            // ---------- 语文生字入口（V2 新增） ----------
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: GestureDetector(
+                onTap: () => state.go(PageId.word),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE6EAF5)),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x0D203060),
+                          blurRadius: 14,
+                          offset: Offset(0, 3)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F0FF),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text('字',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF7B5BEA))),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('语文生字练习',
+                                style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: kInk)),
+                            SizedBox(height: 3),
+                            Text('田字格 + 四线三格 · 练写字 / 练拼音',
+                                style: TextStyle(
+                                    fontSize: 11.5, color: kInk3)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right,
+                          size: 20, color: Color(0xFFC7CEDC)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             // ---------- 历史试卷 ----------
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),

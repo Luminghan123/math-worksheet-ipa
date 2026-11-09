@@ -151,10 +151,13 @@ class _SettingsPageState extends State<SettingsPage> {
                           style: TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 15)),
                       SizedBox(height: 6),
-                      Text('口算题卡 v2.0 · Flutter 桌面版'),
+                      Text('口算题卡 v2.1 · Flutter 桌面版（含语文生字）'),
                       SizedBox(height: 4),
                       Text('按年级收敛知识点，A4 每页 125 题（5 列 × 25 行），'
                           '含 0 运算与填空题。'),
+                      SizedBox(height: 4),
+                      Text('语文生字：田字格 + 四线三格，练写字 / 练拼音两种卷子，'
+                          '内置分级字表，也可手动加字。'),
                       SizedBox(height: 4),
                       Text('保存方式：Windows 系统「另存为」对话框'
                           '（不建文件夹、不留临时文件）。'),

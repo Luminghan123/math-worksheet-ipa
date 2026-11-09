@@ -231,12 +231,13 @@ class SettingsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const GroupHead(badge: 'i', title: '关于', tag: 'v2.0 Flutter'),
+                const GroupHead(badge: 'i', title: '关于', tag: 'v2.1 Flutter'),
                 const SizedBox(height: 6),
                 _aboutRow('应用名称', '口算题卡'),
                 _aboutRow('纸张规格', 'A4 竖版 · 210 × 297 mm'),
                 _aboutRow('每页题量', '$kPerPage 题（${kCols} 列 × ${kRows} 行）'),
                 _aboutRow('出题规则', '按年级收敛 · 含 0 运算'),
+                _aboutRow('语文生字', '田字格 + 四线三格 · 2 种卷子'),
                 _aboutRow('保存方式', '系统分享面板 · 不建文件夹'),
                 const Padding(
                   padding: EdgeInsets.only(top: 10),

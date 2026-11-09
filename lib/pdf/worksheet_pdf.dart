@@ -145,12 +145,17 @@ pw.Widget _questionCell(Question q) {
       children: [
         pw.Text(q.expr, style: pw.TextStyle(fontSize: 3.2 * _mm)),
         if (!q.isFillBlank)
-          // 答案横线：一段贴文字基线的细线，宽 7mm，紧跟算式之后
+          // 答案横线：容器与算式文字行等高，横线贴到容器底边，
+          // 即「贴着算式文字底部」；不再用 top 偏移把线抬到文字中部。
           pw.Container(
-            margin: pw.EdgeInsets.only(left: 1 * _mm, top: 1.1 * _mm),
+            margin: pw.EdgeInsets.only(left: 1 * _mm),
             width: 7 * _mm,
-            height: 0.28 * _mm,
-            color: PdfColors.grey900,
+            height: 3.6 * _mm,
+            alignment: pw.Alignment.bottomCenter,
+            child: pw.Container(
+              height: 0.28 * _mm,
+              color: PdfColors.grey900,
+            ),
           ),
       ],
     ),

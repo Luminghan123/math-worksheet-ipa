@@ -14,12 +14,13 @@ import '../models.dart';
 
 const String _kHistoryKey = 'mwa_flutter_history_v1';
 
-/// 页面索引（对应旧版 4 个 section）
+/// 页面索引（对应旧版 4 个 section + V2 新增语文生字）
 class PageId {
   static const int home = 0;
   static const int config = 1;
   static const int preview = 2;
   static const int settings = 3;
+  static const int word = 4; // 语文生字（配置 / 预览同页切换）
 }
 
 class AppState extends ChangeNotifier {

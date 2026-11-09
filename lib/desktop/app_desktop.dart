@@ -2,21 +2,31 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:provider/provider.dart';
 
+import '../chinese/word_state.dart';
 import '../models.dart';
 import '../state/app_state.dart';
 import 'pages/generate_page.dart';
 import 'pages/history_page.dart';
 import 'pages/settings_page.dart';
+import 'pages/word_page.dart';
 
-/// Windows 桌面端入口：Fluent UI（微软风格），左侧 NavigationView 三页。
+/// Windows 桌面端入口：Fluent UI（微软风格），左侧 NavigationView 四页。
 class FluentMwApp extends StatelessWidget {
   final AppState state;
-  const FluentMwApp({super.key, required this.state});
+  final WordState wordState;
+  const FluentMwApp({
+    super.key,
+    required this.state,
+    required this.wordState,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AppState>.value(
-      value: state,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppState>.value(value: state),
+        ChangeNotifierProvider<WordState>.value(value: wordState),
+      ],
       child: FluentApp(
         title: '口算题卡',
         debugShowCheckedModeBanner: false,
@@ -35,7 +45,7 @@ class FluentMwApp extends StatelessWidget {
   }
 }
 
-/// 桌面三页：出题 / 历史试卷 / 设置（设置放在底部 footer）
+/// 桌面四页：出题（口算） / 语文生字 / 历史试卷 / 设置（设置放在底部 footer）
 class DesktopShell extends StatefulWidget {
   const DesktopShell({super.key});
 
@@ -65,6 +75,11 @@ class _DesktopShellState extends State<DesktopShell> {
             icon: const Icon(FluentIcons.calculator),
             title: const Text('出题'),
             body: const GeneratePage(),
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.dictionary),
+            title: const Text('语文生字'),
+            body: const WordPage(),
           ),
           PaneItem(
             icon: const Icon(FluentIcons.history),

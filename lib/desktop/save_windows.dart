@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 
+import '../chinese/word_models.dart';
+import '../chinese/word_share.dart';
 import '../models.dart';
 import '../share.dart';
 
@@ -17,6 +19,21 @@ Future<bool> saveSheetToDisk(Worksheet sheet) async {
   final result = await buildSheetPdf(sheet); // 内存里生成 PDF 字节
   final location = await getSaveLocation(
     suggestedName: sheetFileName(sheet),
+    acceptedTypeGroups: const [
+      XTypeGroup(label: 'PDF 文档', extensions: ['pdf']),
+    ],
+  );
+  if (location == null) return false;
+  final file = File(location.path);
+  await file.writeAsBytes(result.bytes, flush: true);
+  return true;
+}
+
+/// 生成生字练习卷 PDF 字节并弹出系统「另存为」，成功返回 true；取消返回 false。
+Future<bool> saveWordSheetToDisk(WordSheet sheet) async {
+  final result = await buildWordSheetPdf(sheet); // 内存里生成 PDF 字节
+  final location = await getSaveLocation(
+    suggestedName: wordSheetFileName(sheet),
     acceptedTypeGroups: const [
       XTypeGroup(label: 'PDF 文档', extensions: ['pdf']),
     ],

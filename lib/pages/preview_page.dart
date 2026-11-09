@@ -214,11 +214,17 @@ class _SheetView extends StatelessWidget {
                                 style: const TextStyle(
                                     fontSize: 12.5, color: Color(0xFF111111))),
                             if (!q.isFillBlank)
+                              // 答案横线：容器与算式文字行等高，横线贴到容器底边，
+                              // 即「贴着算式文字底部」，与桌面预览、PDF 导出保持一致。
                               Container(
-                                margin: const EdgeInsets.only(left: 4, top: 7),
+                                margin: const EdgeInsets.only(left: 4),
                                 width: 26,
-                                height: 1.2,
-                                color: const Color(0xFF333333),
+                                height: 15,
+                                alignment: Alignment.bottomCenter,
+                                child: Container(
+                                  height: 1.2,
+                                  color: const Color(0xFF333333),
+                                ),
                               ),
                           ],
                         ),
