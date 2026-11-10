@@ -66,7 +66,7 @@ Future<WordPdfBuildResult> buildWordPdf(
         top: 10 * _mm,
         bottom: 8 * _mm,
       ),
-      build: (ctx) => _buildPage(sheet, sheet.pages[i], i, total),
+      build: (ctx) => _buildPage(sheet, sheet.pages[i], i, total, font.getFont(ctx)),
     ));
   }
   final bytes = await doc.save();
@@ -74,7 +74,7 @@ Future<WordPdfBuildResult> buildWordPdf(
 }
 
 pw.Widget _buildPage(
-    WordSheet sheet, List<Hanzi> words, int idx, int total) {
+    WordSheet sheet, List<Hanzi> words, int idx, int total, PdfFont pdfFont) {
   final rowH = wordRowHeightMm(sheet.perPage) * _mm;
   final rows = wordRows(sheet.perPage);
 
@@ -128,7 +128,7 @@ pw.Widget _buildPage(
               return pw.Container(
                 height: rowH,
                 alignment: pw.Alignment.center,
-                child: _wordCell(h, sheet.mode, sheet.perPage),
+                child: _wordCell(h, sheet.mode, sheet.perPage, pdfFont),
               );
             }),
           );
@@ -152,7 +152,7 @@ pw.Widget _buildPage(
 }
 
 /// 单个生字单元：四线三格（上）+ 田字格（下）
-pw.Widget _wordCell(Hanzi h, String mode, int perPage) {
+pw.Widget _wordCell(Hanzi h, String mode, int perPage, PdfFont pdfFont) {
   final rowH = wordRowHeightMm(perPage) * _mm;
   // 网格总宽 = A4 210 − 左右 22 = 188mm，5 列
   final cellW = (188.0 / kWordCols) * _mm;
@@ -178,14 +178,19 @@ pw.Widget _wordCell(Hanzi h, String mode, int perPage) {
       pw.Container(
         width: side,
         height: fourH,
+        // 网格、字母主体、声调全部用 canvas 直接绘制（同一 painter）。
+        // 不把字母放进 CustomPaint 的 child —— 部分 PDF 阅读器不渲染
+        // CustomPaint 内的复杂嵌套 child（如 Stack），会导致拼音字母消失、
+        // 只剩矢量的网格与声调。canvas.drawString 与田字格汉字走同一
+        // 文字嵌入路径，汉字能显示它就能显示。
         child: pw.CustomPaint(
           painter: (canvas, size) {
             _paintFourLines(canvas, size.x, size.y);
-            if (ly != null && ly.parts.hasTone) {
-              _paintTone(canvas, size.y, ly);
+            if (ly != null) {
+              _paintLetters(canvas, size.y, ly, pdfFont);
+              if (ly.parts.hasTone) _paintTone(canvas, size.y, ly);
             }
           },
-          child: ly == null ? null : _pinyinLetters(ly),
         ),
       ),
       pw.SizedBox(height: gap),
@@ -207,29 +212,25 @@ pw.Widget _wordCell(Hanzi h, String mode, int perPage) {
   );
 }
 
-/// 字母主体：逐字等宽分列，整体水平居中，垂直落在中格。
-/// 用 Stack + Positioned 精确定位每个字母，避免比例字体宽度差异导致错位。
-pw.Widget _pinyinLetters(PinyinLayout ly) {
+/// 字母主体：逐字等宽分列，整体水平居中，垂直落在中格（PDF 坐标，y 向上）。
+/// 用 canvas.drawString 直接画（与网格、声调同属 painter），避开 CustomPaint
+/// 嵌套 child 在部分阅读器不渲染的问题。
+void _paintLetters(
+    PdfGraphics canvas, double fourH, PinyinLayout ly, PdfFont pdfFont) {
+  final cellH = ly.cellH;
   final base = ly.parts.base;
-  return pw.Stack(
-    children: [
-      for (var i = 0; i < ly.letterCount; i++)
-        pw.Positioned(
-          left: ly.x0 + i * ly.unitW,
-          top: ly.cellH,
-          child: pw.SizedBox(
-            width: ly.unitW,
-            height: ly.cellH,
-            child: pw.Center(
-              child: pw.Text(
-                base[i],
-                style: pw.TextStyle(fontSize: ly.fontSize, color: _cInk),
-              ),
-            ),
-          ),
-        ),
-    ],
-  );
+  final fs = ly.fontSize;
+  // 中格 y∈[cellH, 2cellH]；baseline 落在中格内偏下，字母自然撑满中格、
+  // 上伸进上格、下伸进下格（符合书写规范）。
+  final baseline = cellH + fs * 0.18;
+  canvas.setColor(_cInk);
+  for (var i = 0; i < ly.letterCount; i++) {
+    final ch = base[i];
+    final gm = pdfFont.glyphMetrics(ch.codeUnitAt(0));
+    final w = gm.width / pdfFont.unitsPerEm * fs;
+    final x = ly.x0 + i * ly.unitW + (ly.unitW - w) / 2;
+    canvas.drawString(pdfFont, fs, ch, x, baseline);
+  }
 }
 
 /// 画四线三格：4 条水平线，1/4 实线、2/3 虚线，形成 3 个等距格。
